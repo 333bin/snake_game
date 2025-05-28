@@ -12,17 +12,17 @@ WINDOW_WIDTH = GRID_SIZE * CELL_SIZE + 2 * PANEL_WIDTH
 WINDOW_HEIGHT = GRID_SIZE * CELL_SIZE
 TIME_LIMIT = 90  # seconds
 FOOD_SPAWN_INTERVAL = 5000  # milliseconds
-AI_SPAWN_TIMES = [30000, 60000]  # when new AI snakes spawn (ms)
+AI_SPAWN_TIMES = [30000, 60000]  # 적 뱀 등장 시간 (ms)
 
-# Food timings and scores
+# 먹이 등장 시간과 먹이 점수 
 FOOD_UNLOCK_TIMES = [0, 18000, 36000, 54000, 72000]
 FOOD_SCORES = [100, 150, 200, 250, 300]
 
-# Custom events
+# 커스텀 이벤트
 SPAWN_FOOD_EVENT = USEREVENT + 1
 SPAWN_AI_EVENT_30 = USEREVENT + 2
 SPAWN_AI_EVENT_60 = USEREVENT + 3
-# Colors
+# 색 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
@@ -30,7 +30,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 GRAY = (50, 50, 50)
 
-# Directions
+# 방향 
 dirs = {
     'UP': (0, -1),
     'DOWN': (0, 1),
@@ -50,7 +50,8 @@ class Snake:
         self.speed = self.base_speed
         self.last_move_time = pygame.time.get_ticks()
         self.spawn_pos = start_pos[:]
-        # start length = 5
+        
+        # 시작 길이 = 5 
         for _ in range(4):
             self.grow()
 
@@ -115,11 +116,11 @@ class AiSnake(Snake):
 
     def update(self, now):
         if not self.alive:
-            # revive after 3s
+            # 3초 후 부활 
             if now - self.death_time >= 3000:
                 self.revive()
             return
-        # random direction change
+        # 랜덤 방향 변경
         safe_dirs = []
 
         if random.random() < 0.1:
@@ -184,10 +185,10 @@ class Game:
         self.game_offset = PANEL_WIDTH
         self.right_offset = PANEL_WIDTH + GRID_SIZE * CELL_SIZE
 
-        # player + initial AI
+        # 플레이어 뱀과 초기 적 뱀 
         self.player = Snake([GRID_SIZE//2, GRID_SIZE//2], GREEN, is_player=True)
         self.snakes = [self.player]
-        self.spawn_ai()  # initial enemy
+        self.spawn_ai()  # 초기 적 뱀  
 
         self.foods = []
 
@@ -200,7 +201,7 @@ class Game:
 
 
 
-    def game_over(self):
+    def game_over(self): # GAMEOVER 화면 구현 
         font_go = pygame.font.SysFont('times new roman', 90)
         surf_go = font_go.render('GAME OVER', True, RED)
         rect_go = surf_go.get_rect()
@@ -208,7 +209,7 @@ class Game:
         self.window.fill(BLACK)
         self.window.blit(surf_go, rect_go)
 
-        # show final score
+        # 최종 점수 표시
         score_font = pygame.font.SysFont('consolas', 30)
         final_score = getattr(self.player, 'score', 0)
         if final_score > self.high_score:
@@ -282,7 +283,7 @@ class Game:
         now = pygame.time.get_ticks()
         to_kill = []
 
-        # 1) Boundary collisions => death
+        # 1) 경계 충돌 => death
         for s in self.snakes:
             if not s.alive:
                 continue
@@ -290,7 +291,7 @@ class Game:
             if x < 0 or x >= GRID_SIZE or y < 0 or y >= GRID_SIZE:
                 to_kill.append((s, now))
 
-        # 2) Food collisions
+        # 2) 음식 충돌
         for s in self.snakes:
             if not s.alive:
                 continue
@@ -303,7 +304,7 @@ class Game:
                     self.foods.remove(f)
                     break
 
-        # 3) Snake vs snake collisions
+        # 3) 뱀 대 뱀 충돌
         for s1 in self.snakes:
             if not s1.alive:
                 continue
@@ -311,7 +312,8 @@ class Game:
             for s2 in self.snakes:
                 if s1 is s2 or not s2.alive:
                     continue
-                # head-body collision (exclude head of s2)
+
+                # head-body 충돌 (s2의 머리 제외)
                 collided = False
                 for segment in s2.body[1:]:
                     if tuple(segment) == head1:
@@ -320,7 +322,7 @@ class Game:
                         break
                 if collided:
                     continue
-                # head-head collision
+                # head-head 충돌
                 if head1 == s2.head_pos():
                     if s1.length() > s2.length():
                         s1.body = s1.body[:s1.length() - s2.length()]
@@ -332,11 +334,11 @@ class Game:
                         to_kill.append((s1, now))
                         to_kill.append((s2, now))
 
-        # 4) Player death triggers game over
+        # 4) 플레이어 사망 시 게임 종료
         if any(s for s, _ in to_kill if s.is_player):
             self.game_over()
 
-        # 5) Apply deaths and drop 100-point food
+        # 5) 사망 적용 및 100점 먹이 등장
         for s, _ in to_kill:
             if s.alive:
                 for seg in s.body:
@@ -344,7 +346,8 @@ class Game:
             s.die()
 
     def draw_ui(self):
-        # High Score 표시: 두 줄로 나눔
+
+        # High Score 표시: 줄 바꿈 후 점수 표시 
         label_surf = self.font.render('High Score:', True, WHITE)
         score_surf = self.font.render(f'{self.high_score}', True, WHITE)
         self.window.blit(label_surf, (10, 10))
@@ -361,6 +364,7 @@ class Game:
         running = True
         while running:
             now = pygame.time.get_ticks()
+
             # 이벤트 처리
             for ev in pygame.event.get():
                 if ev.type == QUIT:
@@ -398,7 +402,7 @@ class Game:
                 )
             )
 
-            # ① 흰색 격자선
+            # 흰색 격자선
             LIGHT_GRAY = (200, 200, 200)
             for i in range(GRID_SIZE + 1):
                 x = self.game_offset + i * CELL_SIZE
@@ -413,7 +417,7 @@ class Game:
                     (self.game_offset + GRID_SIZE * CELL_SIZE, y)
                 )
 
-            # ② 게임 영역 테두리 그리기 
+            # 게임 영역 테두리 그리기 
             
             pygame.draw.rect(
                 self.window, WHITE,
@@ -425,13 +429,13 @@ class Game:
                 2
             )
 
-            # ③ 음식 및 뱀 그리기
+            # 음식 및 뱀 그리기
             for f in self.foods:
                 f.draw(self.window, self.game_offset)
             for s in self.snakes:
                 s.draw(self.window, self.game_offset)
 
-            # ④ UI 패널
+            # UI 패널
             pygame.draw.rect(
                 self.window, BLACK,
                 (0, 0, PANEL_WIDTH, WINDOW_HEIGHT)
